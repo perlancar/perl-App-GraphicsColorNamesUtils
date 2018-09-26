@@ -15,8 +15,9 @@ $SPEC{list_color_schemes} = {
 };
 sub list_color_schemes {
     require Graphics::ColorNames;
+
     my %args = @_;
-    [200, "OK", [Graphics::ColorNames::all_schemes]];
+    [200, "OK", [Graphics::ColorNames::all_schemes()]];
 }
 
 $SPEC{list_color_names} = {
@@ -39,7 +40,7 @@ sub list_color_names {
 
     my %args = @_;
 
-    tie %colors, 'Graphics::ColorNames', 'Metallic';
+    tie my %colors, 'Graphics::ColorNames', $args{scheme};
 
     my @rows;
     my $resmeta = {};
