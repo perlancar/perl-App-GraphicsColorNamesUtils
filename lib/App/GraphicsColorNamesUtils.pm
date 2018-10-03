@@ -9,6 +9,39 @@ use warnings;
 
 our %SPEC;
 
+$SPEC{colorcode2name} = {
+    v => 1.1,
+    summary => 'Convert RGB color code to name',
+    args => {
+        code => {
+            schema => 'color::rgb24*', # XXX disable coercion from color name
+            req => 1,
+            pos => 0,
+        },
+    },
+};
+sub colorcode2name {
+    require Graphics::ColorNames;
+
+    my %args = @_;
+    my $code = lc $args{code};
+
+    tie my %codes, 'Graphics::ColorNames', Graphics::ColorNames::all_schemes();
+    my %names;
+    for my $name (keys %codes) {
+        my $code = $codes{$name};
+        $names{$code} //= [];
+        push @{ $names{$code} }, $name
+            unless grep { $_ eq $name } @{ $names{$code} };
+    }
+
+    if (defined $names{$code}) {
+        return [200, "OK", join(", ", @{ $names{$code} })];
+    } else {
+        return [404, "Color code '$code' does not yet have a name"];
+    }
+}
+
 $SPEC{list_color_schemes} = {
     v => 1.1,
     summary => 'List all installed Graphics::ColorNames schemes',
