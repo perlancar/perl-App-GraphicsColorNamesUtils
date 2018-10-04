@@ -4,10 +4,39 @@ package App::GraphicsColorNamesUtils;
 # VERSION
 
 use 5.010001;
-use strict;
+use strict 'subs', 'vars';
 use warnings;
 
 our %SPEC;
+
+sub _get_scheme_codes {
+    my ($scheme) = @_;
+    my $mod = "Graphics::ColorNames::$scheme";
+    (my $modpm = "$mod.pm") =~ s!::!/!g;
+    require $modpm;
+    my $res = &{"$mod\::NamesRgbTable"}();
+    if (ref $res eq 'HASH') {
+        for (keys %$res) {
+            $res->{$_} = sprintf("%06x", $res->{$_});
+        }
+        return $res;
+    } else {
+        return {};
+    }
+}
+
+sub _get_all_schemes_codes {
+    require PERLANCAR::Module::List;
+    my $mods = PERLANCAR::Module::List::list_modules(
+        "Graphics::ColorNames::", {list_modules=>1});
+    my %all_codes;
+    for my $mod (sort keys %$mods) {
+        (my $scheme = $mod) =~ s/^Graphics::ColorNames:://;
+        my $codes = _get_scheme_codes($scheme);
+        for (keys %$codes) { $all_codes{$_} //= $codes->{$_} }
+    }
+    \%all_codes;
+}
 
 $SPEC{colorcode2name} = {
     v => 1.1,
@@ -31,10 +60,11 @@ sub colorcode2name {
     my %args = @_;
     my $code = lc $args{code};
 
-    tie my %codes, 'Graphics::ColorNames', Graphics::ColorNames::all_schemes();
+    my $all_codes = _get_all_schemes_codes();
+
     my %names;
-    for my $name (keys %codes) {
-        my $code = $codes{$name};
+    for my $name (sort keys %$all_codes) {
+        my $code = $all_codes->{$name};
         $names{$code} //= [];
         push @{ $names{$code} }, $name
             unless grep { $_ eq $name } @{ $names{$code} };
@@ -45,16 +75,15 @@ sub colorcode2name {
     } elsif ($args{approx}) {
         require Color::RGB::Util;
 
-        my @colors_and_distances =
+        my @colors_and_diffs =
             sort {
                 $a->[2] <=> $b->[2]
             }
             map {
                 # name, code, distance to wanted
-                [$_, $codes{$_}, Color::RGB::Util::rgb_distance($code, $codes{$_})]
-            } sort keys %codes;
-        my @closest = splice @colors_and_distances, 0, 5;
-        use DD; dd \@colors_and_distances;
+                [$_, $all_codes->{$_}, Color::RGB::Util::rgb_diff($code, $all_codes->{$_}, 'approx1')]
+            } sort keys %$all_codes;
+        my @closest = splice @colors_and_diffs, 0, 5;
         return [200, "OK (approx)", [map {+{name=>$_->[0], code=>$_->[1]}} @closest], {
             'table.fields' => [qw/name code/]}];
     } else {
@@ -90,9 +119,9 @@ sub colorname2code {
     my %args = @_;
     my $name = $args{name};
 
-    tie my %colors, 'Graphics::ColorNames', Graphics::ColorNames::all_schemes();
-    if (defined $colors{$name}) {
-        return [200, "OK", $colors{$name}];
+    my $all_codes = _get_all_schemes_codes();
+    if (defined $all_codes->{$name}) {
+        return [200, "OK", $all_codes->{$name}];
     } else {
         return [404, "Unknown color name '$name'"];
     }
@@ -118,12 +147,12 @@ sub list_color_names {
 
     my %args = @_;
 
-    tie my %colors, 'Graphics::ColorNames', $args{scheme};
+    my $codes = _get_scheme_codes($args{scheme});
 
     my @rows;
     my $resmeta = {};
-    for (sort keys %colors) {
-        push @rows, {name=>$_, rgb=>$colors{$_}};
+    for (sort keys %$codes) {
+        push @rows, {name=>$_, rgb=>$codes->{$_}};
     }
 
     if ($args{detail}) {
