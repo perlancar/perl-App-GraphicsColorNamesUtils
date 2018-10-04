@@ -18,6 +18,11 @@ $SPEC{colorcode2name} = {
             req => 1,
             pos => 0,
         },
+        approx => {
+            summary => 'When a name with exact code is not found, '.
+                'find the several closest ones',
+            schema => 'bool*',
+        },
     },
 };
 sub colorcode2name {
@@ -37,6 +42,21 @@ sub colorcode2name {
 
     if (defined $names{$code}) {
         return [200, "OK", join(", ", @{ $names{$code} })];
+    } elsif ($args{approx}) {
+        require Color::RGB::Util;
+
+        my @colors_and_distances =
+            sort {
+                $a->[2] <=> $b->[2]
+            }
+            map {
+                # name, code, distance to wanted
+                [$_, $codes{$_}, Color::RGB::Util::rgb_distance($code, $codes{$_})]
+            } sort keys %codes;
+        my @closest = splice @colors_and_distances, 0, 5;
+        use DD; dd \@colors_and_distances;
+        return [200, "OK (approx)", [map {+{name=>$_->[0], code=>$_->[1]}} @closest], {
+            'table.fields' => [qw/name code/]}];
     } else {
         return [404, "Color code '$code' does not yet have a name"];
     }
