@@ -53,6 +53,31 @@ sub list_color_schemes {
     [200, "OK", [Graphics::ColorNames::all_schemes()]];
 }
 
+$SPEC{colorname2code} = {
+    v => 1.1,
+    summary => 'Convert color name to code',
+    args => {
+        name => {
+            schema => 'str*',
+            req => 1,
+            pos => 0,
+        },
+    },
+};
+sub colorname2code {
+    require Graphics::ColorNames;
+
+    my %args = @_;
+    my $name = $args{name};
+
+    tie my %colors, 'Graphics::ColorNames', Graphics::ColorNames::all_schemes();
+    if (defined $colors{$name}) {
+        return [200, "OK", $colors{$name}];
+    } else {
+        return [404, "Unknown color name '$name'"];
+    }
+}
+
 $SPEC{list_color_names} = {
     v => 1.1,
     summary => 'List all color names from a Graphics::ColorNames scheme',
