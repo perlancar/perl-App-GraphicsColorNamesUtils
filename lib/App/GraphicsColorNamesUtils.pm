@@ -1,6 +1,8 @@
 package App::GraphicsColorNamesUtils;
 
+# AUTHORITY
 # DATE
+# DIST
 # VERSION
 
 use 5.010001;
@@ -26,8 +28,8 @@ sub _get_scheme_codes {
 }
 
 sub _get_all_schemes_codes {
-    require PERLANCAR::Module::List;
-    my $mods = PERLANCAR::Module::List::list_modules(
+    require Module::List::Tiny;
+    my $mods = Module::List::Tiny::list_modules(
         "Graphics::ColorNames::", {list_modules=>1});
     my %all_codes;
     for my $mod (sort keys %$mods) {
