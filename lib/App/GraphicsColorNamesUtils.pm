@@ -1,13 +1,13 @@
 package App::GraphicsColorNamesUtils;
 
+use 5.010001;
+use strict 'subs', 'vars';
+use warnings;
+
 # AUTHORITY
 # DATE
 # DIST
 # VERSION
-
-use 5.010001;
-use strict 'subs', 'vars';
-use warnings;
 
 our %SPEC;
 
@@ -112,6 +112,11 @@ $SPEC{colorname2code} = {
             schema => 'str*',
             req => 1,
             pos => 0,
+            completion => sub {
+                my %args = @_;
+                require Complete::Color;
+                Complete::Color::complete_color_name(word=>$args{word});
+            },
         },
     },
 };
