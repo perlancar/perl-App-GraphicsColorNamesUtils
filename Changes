@@ -1,3 +1,8 @@
+0.007   2023-12-04  Released-By: PERLANCAR; Urgency: medium
+
+        - [bugfix] Fix sprintf() template.
+
+
 0.006   2023-11-30  Released-By: PERLANCAR; Urgency: medium
 
         - [ux] Add completion to colorname2code.
