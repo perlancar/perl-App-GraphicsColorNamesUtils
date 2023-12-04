@@ -19,7 +19,7 @@ sub _get_scheme_codes {
     my $res = &{"$mod\::NamesRgbTable"}();
     if (ref $res eq 'HASH') {
         for (keys %$res) {
-            $res->{$_} = sprintf("%06x", $res->{$_});
+            $res->{$_} = sprintf("%06s", $res->{$_});
         }
         return $res;
     } else {
