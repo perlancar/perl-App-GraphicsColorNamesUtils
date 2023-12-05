@@ -83,7 +83,7 @@ sub colorcode2name {
             }
             map {
                 # name, code, distance to wanted
-                [$_, $all_codes->{$_}, Color::RGB::Util::rgb_diff($code, $all_codes->{$_}, 'approx1')]
+                [$_, $all_codes->{$_}, do { Color::RGB::Util::rgb_diff($code, sprintf("%06x",$all_codes->{$_}), 'approx1')}]
             } sort keys %$all_codes;
         my @closest = splice @colors_and_diffs, 0, 5;
         return [200, "OK (approx)", [map {+{name=>$_->[0], code=>$_->[1]}} @closest], {
